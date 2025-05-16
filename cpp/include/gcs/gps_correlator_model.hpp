@@ -139,7 +139,7 @@ std::complex<T> LinearCorrelatorModel(
 
 // code and phase error functions should have input and output of type T
 template<typename T = double>
-std::complex<T> PiecewiseCorrelatorModel(
+std::complex<T> PiecewiseI(
       const std::size_t segments,
       std::function<T(T)>& code_error, // time [s] -> chips
       std::function<T(T)>& phase_error,  // time [s] -> radians
@@ -158,7 +158,49 @@ std::complex<T> PiecewiseCorrelatorModel(
                 ( phase_error(times(i+1)) - phase_error(times(i)) ) / dt
       );
   }
-  return 2.0 * std::sqrt(cno / corr_period) * integral;
+  return integral;
+}
+
+
+// version intended for determining the correlation between two signal replicas
+template<typename T = double>
+std::complex<T> PiecewiseI(
+      const std::size_t segments,
+      std::function<T(T)>& code1, // time [s] -> chips
+      std::function<T(T)>& code2, // time [s] -> chips
+      std::function<T(T)>& carrier1,  // time [s] -> radians
+      std::function<T(T)>& carrier2,  // time [s] -> radians
+      const T corr_period,
+      const T cno)
+{
+  std::complex<T> integral = 0.0;
+  Eigen::VectorXd times = Eigen::VectorXd::LinSpaced(segments+1,0.0,corr_period);
+  for (std::size_t i = 0; i < segments; i++) {
+    T dt = times(i+1) - times(i);
+    integral += CalculateI(
+                dt,
+                code1(times(i)) - code2(times(i)),
+                ( code1(times(i+1)) - code2(times(i+1)) - code1(times(i))
+                  + code2(times(i)) ) / dt,
+                carrier1(times(i)) - carrier2(times(i)),
+                ( carrier1(times(i+1)) - carrier2(times(i+1)) 
+                  - carrier1(times(i)) + carrier2(times(i)) ) / dt
+      );
+  }
+  return integral;
+}
+
+
+template<typename T = double>
+std::complex<T> PiecewiseCorrelatorModel(
+      const std::size_t segments,
+      std::function<T(T)>& code_error, // time [s] -> chips
+      std::function<T(T)>& phase_error,  // time [s] -> radians
+      const T corr_period,
+      const T cno)
+{
+  return 2.0 * std::sqrt(cno / corr_period)
+         * PiecewiseI(segments,code_error,phase_error,corr_period,cno);
 }
 
 /*
