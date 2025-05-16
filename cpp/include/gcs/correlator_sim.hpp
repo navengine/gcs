@@ -6,7 +6,6 @@
 #include <functional>
 #include <cassert>
 #include <random>
-#include <cstdarg>
 
 #include <Eigen/Dense>
 
