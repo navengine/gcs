@@ -9,6 +9,10 @@ If you wish to use gcs in your CMake project, simply add the include directory t
 ```
 target_include_directories(target_name_here ${CMAKE_CURRENT_SOURCE_DIR}/gcs/cpp/include)
 ```
+Then, in your code, add the include:
+```
+#include <gcs/correlator_sim.hpp>
+```
 
 ### Example Usage
 TODO
